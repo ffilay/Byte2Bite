@@ -8,7 +8,6 @@
 *.ko
 *.obj
 *.elf
-backend/obj
 
 # Linker output
 *.ilk
@@ -64,3 +63,7 @@ node_modules
 
 expo-env.d.ts
 # @end expo-cli
+
+# .NET build artifacts
+backend/bin/
+backend/obj/

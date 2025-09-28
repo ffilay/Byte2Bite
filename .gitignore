@@ -8,6 +8,7 @@
 *.ko
 *.obj
 *.elf
+backend/obj
 
 # Linker output
 *.ilk
@@ -43,6 +44,7 @@
 *.su
 *.idb
 *.pdb
+
 
 # Kernel Module Compile Results
 *.mod*

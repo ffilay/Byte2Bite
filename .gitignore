@@ -44,6 +44,7 @@
 *.idb
 *.pdb
 
+
 # Kernel Module Compile Results
 *.mod*
 *.cmd
@@ -62,3 +63,7 @@ node_modules
 
 expo-env.d.ts
 # @end expo-cli
+
+# .NET build artifacts
+backend/bin/
+backend/obj/

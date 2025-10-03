@@ -2,7 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import { Slot, Link, usePathname } from "expo-router";
 
 export default function RootLayout() {
-  const pathname = usePathname(); // 🔹 Get current route
+  const pathname = usePathname();
 
   const links = [
     { href: "/", label: "Home" },
@@ -12,7 +12,7 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* 🔹 Top Bar */}
+      {/* Top Bar */}
       <View
         style={{
           height: 75,
@@ -24,12 +24,9 @@ export default function RootLayout() {
           paddingHorizontal: 20,
         }}
       >
-        {/* Left side: Title */}
         <Text style={{ fontSize: 22, fontWeight: "bold", color: "black" }}>
           Byte2Bite
         </Text>
-
-        {/* Middle: Subtitle */}
         <View style={{ flex: 1, alignItems: "center" }}>
           <Text style={{ fontSize: 14, fontWeight: "bold", color: "black" }}>
             Restaurant Inventory Management Platform
@@ -37,21 +34,25 @@ export default function RootLayout() {
         </View>
       </View>
 
-      {/* 🔹 Body with Sidebar + Content */}
+      {/* Body with Sidebar + Content */}
       <View style={{ flex: 1, flexDirection: "row" }}>
         {/* Sidebar */}
         <View style={{ width: 200, backgroundColor: "#f4f4f4", padding: 20 }}>
           {links.map((link) => {
-            const isActive = pathname === link.href; // 🔹 check if active
+            const isActive = pathname === link.href;
             return (
               <Link key={link.href} href={link.href} asChild>
-                <Pressable>
-                  {({ hovered }) => (
+                <Pressable
+                  accessibilityRole="link"
+                  style={{ paddingVertical: 8 }}
+                >
+                  {({ pressed, hovered }) => (
                     <Text
                       style={{
-                        marginVertical: 15,
+                        marginVertical: 7,
                         fontSize: 20,
-                        fontWeight: isActive || hovered ? "700" : "400",
+                        fontWeight:
+                          isActive || pressed || hovered ? "700" : "400",
                       }}
                     >
                       {link.label}

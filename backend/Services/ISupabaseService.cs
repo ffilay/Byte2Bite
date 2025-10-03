@@ -1,6 +1,6 @@
-using BYTE2BITE.Models;
+using backend.Models;
 
-namespace BYTE2BITE.Services
+namespace backend.Services
 {
     public interface ISupabaseService
     {

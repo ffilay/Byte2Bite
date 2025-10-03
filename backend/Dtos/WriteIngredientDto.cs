@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BYTE2BITE.Dtos
+namespace backend.Dtos
 {
-    public class IngredientDto
+    public class WriteIngredientDto
     {
         [Required]
         public int Id { get; set; }

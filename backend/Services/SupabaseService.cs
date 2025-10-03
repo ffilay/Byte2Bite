@@ -1,6 +1,6 @@
-using BYTE2BITE.Models;
+using backend.Models;
 
-namespace BYTE2BITE.Services
+namespace backend.Services
 {
     public class SupabaseService : ISupabaseService
     {
@@ -11,9 +11,11 @@ namespace BYTE2BITE.Services
             _client = client;
         }
 
-        public async Task<IEnumerable<Ingredient>> GetIngredientsAsync()
+        public async Task<IEnumerable<Ingredient>> GetIngredientsAsync(int limit = 100)
         {
             var response = await _client.From<Ingredient>()
+                                        .Select("*")
+                                        .Limit(limit)
                                         .Get();
             return response.Models;
         }
@@ -53,11 +55,6 @@ namespace BYTE2BITE.Services
                                         .Where(i => i.Id == id)
                                         .Delete();
             return true;
-        }
-
-        public Task<IEnumerable<Ingredient>> GetIngredientsAsync(int limit = 100)
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -1,15 +1,18 @@
 using AutoMapper;
-using BYTE2BITE.Dtos;
-using BYTE2BITE.Models;
+using backend.Dtos;
+using backend.Models;
 
-namespace BYTE2BITE.Mapping
+namespace backend.Mapping
 {
     public class AutoMapperProfile : Profile
     {
         public AutoMapperProfile()
         {
-            // Map IngredientDto -> Ingredient
-            CreateMap<IngredientDto, Ingredient>();
+            // Map Ingredient -> ReadIngredientDto
+            CreateMap<Ingredient, ReadIngredientDto>();
+
+            // Map WriteIngredientDto -> Ingredient
+            CreateMap<WriteIngredientDto, Ingredient>();
 
             // Map ItemDto -> Item
             CreateMap<ItemDto, Item>();

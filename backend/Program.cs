@@ -1,11 +1,9 @@
-using BYTE2BITE.Models;
-using Microsoft.Extensions.DependencyInjection;
+using backend.Models;
+using backend.Services;
+using backend.Mapping;
 using Square;
 using Square.Catalog;
 using Supabase;
-using AutoMapper;
-using BYTE2BITE.Services;
-using BYTE2BITE.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +48,7 @@ builder.Services.AddSingleton<Client>(sp =>
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.MapControllers();
 
 await RunSquareSmokeTestAsync(app.Services);

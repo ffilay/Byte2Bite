@@ -1,7 +1,7 @@
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
-namespace BYTE2BITE.Models
+namespace backend.Models
 {
     [Table("inventory_log")]
     public class Inventory_Log : BaseModel

@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using BYTE2BITE.Services;
+using backend.Services;
+using backend.Dtos;
 using AutoMapper;
 
-namespace BYTE2BITE.Controllers
+namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -21,14 +22,16 @@ namespace BYTE2BITE.Controllers
         public async Task<IActionResult> GetAll()
         {
             var ingredients = await _supabase.GetIngredientsAsync();
-            return Ok(ingredients);
+            var dtos = _mapper.Map<IEnumerable<ReadIngredientDto>>(ingredients);
+            return Ok(dtos);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> Get(int id)
         {
             var ingredient = await _supabase.GetIngredientByIdAsync(id);
-            return ingredient == null ? NotFound() : Ok(ingredient);
+            var dto = _mapper.Map<ReadIngredientDto>(ingredient);
+            return ingredient == null ? NotFound() : Ok(dto);
         }
 
         //implement method to add new ingredient and update existing

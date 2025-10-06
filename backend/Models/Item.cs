@@ -20,5 +20,10 @@ namespace backend.Models
 
         [Column("description")]
         public string? Description { get; set; }
+
+        [Column("restaurant_id")]
+        public int Restaurant_Id { get; set; }
+
+        public Restaurant? Restaurant { get; set; }
     }
 }

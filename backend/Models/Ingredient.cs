@@ -29,5 +29,9 @@ namespace backend.Models
 
         [Column("low_stock_threshold")]
         public decimal Low_Stock_Threshold { get; set; }
+
+        [Column("distributor_id")]
+        public int DistributorID { get; set; }
+        public Distributor? Distributor { get; set; }
     }
 }

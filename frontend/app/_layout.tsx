@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import { Slot, Link, usePathname } from "expo-router";
+import { Slot, Link, usePathname, Href } from "expo-router";
 
 export default function RootLayout() {
   const pathname = usePathname();
@@ -41,7 +41,7 @@ export default function RootLayout() {
           {links.map((link) => {
             const isActive = pathname === link.href;
             return (
-              <Link key={link.href} href={link.href} asChild>
+              <Link key={link.href} href={link.href as Href} asChild>
                 <Pressable
                   accessibilityRole="link"
                   style={{ paddingVertical: 8 }}

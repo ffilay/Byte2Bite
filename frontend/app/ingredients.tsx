@@ -2,7 +2,7 @@ import { View, Text, Button, Modal, TextInput, TouchableOpacity, FlatList } from
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from "react";
 import { ingredientsService, Ingredient } from "@/services/ingredientService";
-import IngredientTable from "./IngredientTable";
+import IngredientTable from "./components/IngredientTable";
 
 export default function IngredientsPage() {
   const [showAddModal, setShowAddModal] = useState(false);

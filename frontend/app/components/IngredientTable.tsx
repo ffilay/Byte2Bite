@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState, useEffect } from 'react';
 import { BsTrash } from "react-icons/bs";
-import { ingredientsService, Ingredient } from '../services/ingredientService'
+import { ingredientsService, Ingredient } from '../../services/ingredientService'
 
 export default function IngredientTable() {
 

@@ -1,10 +1,34 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { ingredientsService, Ingredient } from "@/services/ingredientService";
+import { useState, useEffect } from 'react';
+import { BsTrash } from "react-icons/bs";
+import { ingredientsService, Ingredient } from '../services/ingredientService'
 
-interface Props {
-    ingredients: Ingredient[];
-}
-const IngredientTable: React.FC<Props> = ({ ingredients }) => {
+export default function IngredientTable() {
+
+    const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+
+    // fetch all
+    const loadIngredients = async () => {
+        const data = await ingredientsService.getAllIngredients();
+        setIngredients(data);
+    };
+
+    // delete handler
+    const deleteIngredient = async (id: number) => {
+        try {
+        await ingredientsService.deleteIngredient(id);
+        console.log(`Deleted ingredient ${id}`);
+        // refresh list after deletion
+        setIngredients((prev) => prev.filter((ing) => ing.id !== id));
+        } catch (err) {
+        console.error("Error deleting ingredient:", err);
+        }
+    };
+
+    useEffect(() => {
+        loadIngredients();
+    }, []);
+
     return (
     <div className="table-responsive">
       <table className="table table-striped table-bordered">
@@ -17,6 +41,7 @@ const IngredientTable: React.FC<Props> = ({ ingredients }) => {
             <th scope="col">Current Stock</th>
             <th scope="col">Low Stock Threshold</th>
             <th scope="col">Max Stock</th>
+            <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
@@ -29,6 +54,7 @@ const IngredientTable: React.FC<Props> = ({ ingredients }) => {
               <td>{item.current_Stock}</td>
               <td>{item.low_Stock_Threshold}</td>
               <td>{item.max_Stock}</td>
+              <td><button className='btn btn-outline-primary' onClick={() => deleteIngredient(item.id)}><BsTrash/></button></td>
             </tr>
           ))}
         </tbody>
@@ -37,4 +63,3 @@ const IngredientTable: React.FC<Props> = ({ ingredients }) => {
   );
 }
 
-export default IngredientTable;

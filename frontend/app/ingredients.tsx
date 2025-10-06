@@ -36,7 +36,7 @@ export default function IngredientsPage() {
       <Text style={{ fontSize: 18, fontWeight: "bold", margin: 20 }}>
         Ingredient Inventory:
       </Text>
-      <IngredientTable ingredients={ingredients}/>
+      <IngredientTable/>
     </View>
   );
 }

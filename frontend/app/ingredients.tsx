@@ -1,9 +1,27 @@
-import { View, Text, Button, Modal, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import { View, Text, Button, Modal, TextInput, TouchableOpacity, FlatList } from "react-native";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { useEffect, useState } from "react";
+import { ingredientsService, Ingredient } from "@/services/ingredientService";
+import IngredientTable from "./IngredientTable";
 
 export default function IngredientsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newIngredientName, setNewIngredientName] = useState("");
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        const data = await ingredientsService.getAllIngredients();
+        console.log("Fetched ingredients:", data);
+        setIngredients(data);
+      }
+      catch (err){
+        console.error("Error fetching ingredients:", err);
+      }
+    };
+    fetchIngredients();
+  }, []);
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
@@ -15,6 +33,10 @@ export default function IngredientsPage() {
         <Button title="Update Ingredient" onPress={() => console.log("Update works")}/>
         <Button title="Delete Ingredient" onPress={() => console.log("Delete works")}/>
       </View>
-            </View>
+      <Text style={{ fontSize: 18, fontWeight: "bold", margin: 20 }}>
+        Ingredient Inventory:
+      </Text>
+      <IngredientTable ingredients={ingredients}/>
+    </View>
   );
 }

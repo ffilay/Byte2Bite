@@ -22,6 +22,7 @@ var supabaseKey = builder.Configuration["Supabase:Key"]
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddScoped<ISupabaseService, SupabaseService>();
+builder.Services.AddScoped<ISquareMenuSyncService, SquareMenuSyncService>();
 
 // Register minimal services
 builder.Services.AddControllers();

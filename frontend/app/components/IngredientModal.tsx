@@ -99,7 +99,7 @@ type Props = {
                       />
                     </Form.Group>
                     <Form.Group className="mb-2">
-                      <Form.Label>Cost per Case</Form.Label>
+                      <Form.Label>Cost per Unit</Form.Label>
                       <Form.Control
                         type="number"
                         value={newIngredient.cost_Per_Unit}
@@ -112,7 +112,7 @@ type Props = {
                       />
                     </Form.Group>
                     <Form.Group className="mb-2">
-                      <Form.Label>Cost per Case</Form.Label>
+                      <Form.Label>Current Stock</Form.Label>
                       <Form.Control
                         type="number"
                         value={newIngredient.current_Stock}
@@ -125,7 +125,7 @@ type Props = {
                       />
                     </Form.Group>
                     <Form.Group className="mb-2">
-                      <Form.Label>Cost per Case</Form.Label>
+                      <Form.Label>Max Stock</Form.Label>
                       <Form.Control
                         type="number"
                         value={newIngredient.max_Stock}
@@ -138,7 +138,7 @@ type Props = {
                       />
                     </Form.Group>
                     <Form.Group className="mb-2">
-                      <Form.Label>Cost per Case</Form.Label>
+                      <Form.Label>Low Stock Threshold</Form.Label>
                       <Form.Control
                         type="number"
                         value={newIngredient.low_Stock_Threshold}

@@ -1,4 +1,4 @@
-using Supabase.Postgrest.Attributes;
+/*using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
 namespace backend.Models
@@ -28,3 +28,4 @@ namespace backend.Models
 
     }
 }
+*/

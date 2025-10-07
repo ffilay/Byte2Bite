@@ -14,18 +14,18 @@ namespace backend.Dtos
         public string Unit { get; set; } = null!;
 
         [Required]
-        public float Cost_Per_Case { get; set; }
+        public decimal Cost_Per_Case { get; set; }
 
         [Required]
-        public float Cost_Per_Unit { get; set; }
+        public decimal Cost_Per_Unit { get; set; }
 
         [Required]
-        public float Current_Stock { get; set; }
+        public decimal Current_Stock { get; set; }
 
         [Required]
-        public float Max_Stock { get; set; }
+        public decimal Max_Stock { get; set; }
 
         [Required]
-        public float Low_Stock_Threshold { get; set; }
+        public decimal Low_Stock_Threshold { get; set; }
     }
 }

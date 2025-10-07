@@ -36,10 +36,10 @@ namespace backend.Services
             return response.Models.FirstOrDefault();
         }
 
-        public async Task<Ingredient?> UpdateIngredientAsync(Ingredient ingredient)
+        public async Task<Ingredient?> UpdateIngredientAsync(int id, Ingredient ingredient)
         {
             var response = await _client.From<Ingredient>()
-                                        .Where(i => i.Id == ingredient.Id)
+                                        .Where(i => i.Id == id)
                                         .Update(ingredient);
             return response.Models.FirstOrDefault();
         }

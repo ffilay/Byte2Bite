@@ -8,11 +8,11 @@ namespace backend.Mapping
     {
         public AutoMapperProfile()
         {
-            // Map Ingredient -> ReadIngredientDto
-            CreateMap<Ingredient, ReadIngredientDto>();
+            // Map Ingredient <-> ReadIngredientDto
+            CreateMap<Ingredient, ReadIngredientDto>().ReverseMap();
 
-            // Map WriteIngredientDto -> Ingredient
-            CreateMap<WriteIngredientDto, Ingredient>();
+            // Map Ingredient <-> WriteIngredientDto
+            CreateMap<Ingredient, WriteIngredientDto>().ReverseMap();
 
             // Map ItemDto -> Item
             CreateMap<ItemDto, Item>();

@@ -4,10 +4,10 @@ namespace backend.Dtos
         int Id,
         string Name,
         string Unit,
-        float Cost_Per_Case,
-        float Cost_Per_Unit,
-        float Current_Stock,
-        float Max_Stock,
-        float Low_Stock_Threshold
+        decimal Cost_Per_Case,
+        decimal Cost_Per_Unit,
+        decimal Current_Stock,
+        decimal Max_Stock,
+        decimal Low_Stock_Threshold
     );
 }

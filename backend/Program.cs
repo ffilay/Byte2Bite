@@ -46,8 +46,20 @@ builder.Services.AddSingleton<Client>(sp =>
     return client;
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:8081") 
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
+app.UseCors("AllowReactApp");
 //app.UseHttpsRedirection();
 app.MapControllers();
 

@@ -16,18 +16,24 @@ namespace backend.Models
         public string? Unit { get; set; }
 
         [Column("cost_per_case")]
-        public float Cost_Per_Case { get; set; }
+        public decimal Cost_Per_Case { get; set; }
 
         [Column("cost_per_unit")]
-        public float Cost_Per_Unit { get; set; }
+        public decimal Cost_Per_Unit { get; set; }
 
         [Column("current_stock")]
-        public float Current_Stock { get; set; }
+        public decimal Current_Stock { get; set; }
 
         [Column("max_stock")]
-        public float Max_Stock { get; set; }
+        public decimal Max_Stock { get; set; }
 
         [Column("low_stock_threshold")]
-        public float Low_Stock_Threshold { get; set; }
+        public decimal Low_Stock_Threshold { get; set; }
+
+/*
+        [Column("distributor_id")]
+        public int DistributorID { get; set; }
+        public Distributor? Distributor { get; set; }
+        */
     }
 }

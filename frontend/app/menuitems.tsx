@@ -1,20 +1,32 @@
-import { View, Text, Button, Modal, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import { Button } from "react-bootstrap";
+import MenuTable from "./components/MenuTable";
+import { MenuItem, menuService } from "@/services/menuService";
+import { useEffect, useState } from "react";
 
 export default function IngredientsPage() {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newIngredientName, setNewIngredientName] = useState("");
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+
+  useEffect(() => {
+    const fetchMenuItems= async () => {
+      try {
+        const data = await menuService.getAllMenuItems();
+        console.log("Fetched menu items:", data);
+        setMenuItems(data);
+      }
+      catch (err){
+        console.error("Error fetching menu items:", err);
+      }
+    };
+    fetchMenuItems();
+  }, []);
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-        Menu Items
-      </Text>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Button title="Add Menu Item" onPress={() => console.log("Add works")}/>
-        <Button title="Update Menu Item" onPress={() => console.log("Update works")}/>
-        <Button title="Delete Menu Item" onPress={() => console.log("Delete works")}/>
-      </View>
-            </View>
+  <div className="container mt-4">
+  <Button className="btn btn-primary me-3" onClick={() => {}}>
+    Add Menu Item
+  </Button>
+  <h3 className="mt-4">Menu Inventory:</h3>
+      <MenuTable menuItem={menuItems}/>
+  </div>
   );
 }

@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from "react";
-import { BsTrash } from "react-icons/bs";
+import { BsTrash, BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { Ingredient } from '../../services/ingredientService';
 
 type Props = {
@@ -94,8 +94,15 @@ export default function IngredientTable({ ingredients, onEdit, onDelete }: Props
   }, [ingredients, sortConfig]);
 
   const sortIndicator = (key: SortKey) => {
-    if (!sortConfig || sortConfig.key !== key) return "";
-    return sortConfig.direction === "asc" ? " ^" : " v";
+    if (!sortConfig || sortConfig.key !== key) {
+      return <span className="ms-2 text-muted">↕</span>;
+    }
+
+    return sortConfig.direction === "asc" ? (
+      <BsChevronUp className="ms-2" />
+    ) : (
+      <BsChevronDown className="ms-2" />
+    );
   };
 
   const stockClass = (item: Ingredient) => {
@@ -107,7 +114,7 @@ export default function IngredientTable({ ingredients, onEdit, onDelete }: Props
 
   return (
     <div className="table-responsive">
-      <table className="table table-striped table-bordered">
+      <table className="table table-hover align-middle">
         <colgroup>  
           <col style={{ width: '24%' }} /> 
           <col style={{ width: '8%' }} /> 
@@ -119,28 +126,49 @@ export default function IngredientTable({ ingredients, onEdit, onDelete }: Props
           <col style={{ width: 80 }} /> 
           <col style={{ width: 60 }} />
         </colgroup>
-        <thead className="table-dark">
+        <thead className="bg-light text-secondary">
           <tr>
             <th scope="col" onClick={() => handleSort("name")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Ingredient{sortIndicator("name")}
+              <span className="d-inline-flex align-items-center">
+                Ingredient
+                {sortIndicator("name")}
+              </span>
             </th>
             <th scope="col" onClick={() => handleSort("unit")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Unit{sortIndicator("unit")}
+              <span className="d-inline-flex align-items-center">
+                Unit
+                {sortIndicator("unit")}
+              </span>
             </th>
             <th scope="col" onClick={() => handleSort("cost_Per_Case")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Case Cost{sortIndicator("cost_Per_Case")}
+              <span className="d-inline-flex align-items-center">
+                Case Cost
+                {sortIndicator("cost_Per_Case")}
+              </span>
             </th>
             <th scope="col" onClick={() => handleSort("cost_Per_Unit")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Unit Cost{sortIndicator("cost_Per_Unit")}
+              <span className="d-inline-flex align-items-center">
+                Unit Cost
+                {sortIndicator("cost_Per_Unit")}
+              </span>
             </th>
             <th scope="col" onClick={() => handleSort("current_Stock")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Current Stock{sortIndicator("current_Stock")}
+              <span className="d-inline-flex align-items-center">
+                Current Stock
+                {sortIndicator("current_Stock")}
+              </span>
             </th>
             <th scope="col" onClick={() => handleSort("low_Stock_Threshold")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Low Stock Threshold{sortIndicator("low_Stock_Threshold")}
+              <span className="d-inline-flex align-items-center">
+                Low Stock Threshold
+                {sortIndicator("low_Stock_Threshold")}
+              </span>
             </th>
             <th scope="col" onClick={() => handleSort("max_Stock")} style={{ cursor: "pointer", userSelect: "none" }}>
-              Max Stock{sortIndicator("max_Stock")}
+              <span className="d-inline-flex align-items-center">
+                Max Stock
+                {sortIndicator("max_Stock")}
+              </span>
             </th>
             <th scope="col"></th>
             <th scope="col"></th>
@@ -160,19 +188,15 @@ export default function IngredientTable({ ingredients, onEdit, onDelete }: Props
               <td>
                 <button
                   type="button"
-                  className="btn"
+                  className={`btn d-inline-flex align-items-center justify-content-center ${
+                    confirmingId === item.id ? "btn-danger text-white border-white" : "btn-outline-secondary"
+                  }`}
                   aria-label={confirmingId === item.id ? "Confirm delete ingredient" : "Delete ingredient"}
                   onClick={() =>
                     confirmingId === item.id ? confirmDelete(item.id) : requestDelete(item.id)
                   }
-                  style={{
-                    backgroundColor: confirmingId === item.id ? '#dc3545' : '#ffffff',
-                    borderColor: confirmingId === item.id ? '#ffffff' : '#6c757d',
-                    color: confirmingId === item.id ? '#ffffff' : '#6c757d',
-                    outline: 'none',
-                  }}
+                  style={{ width: 44, height: 40 }}
                   onBlur={() => {
-                    // reset the confirmation if focus leaves the button
                     if (confirmingId === item.id) {
                       setConfirmingId(null);
                     }

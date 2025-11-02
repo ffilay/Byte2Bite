@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useMemo, useState } from "react";
+import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { Items } from "../../services/menuService";
 
 type Props = {
@@ -7,13 +8,15 @@ type Props = {
   onEdit: (item: Items) => void;
 };
 
-export default function MenuTable({ menuItem, onEdit }: Props) {
-  type SortKey = "name" | "price" | "category" | "description";
+type SortKey = "name" | "price" | "category" | "description";
 
-  const [sortConfig, setSortConfig] = useState<{
-    key: SortKey;
-    direction: "asc" | "desc";
-  } | null>(null);
+type SortConfig = {
+  key: SortKey;
+  direction: "asc" | "desc";
+};
+
+export default function MenuTable({ menuItem, onEdit }: Props) {
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
   const handleSort = (key: SortKey) => {
     setSortConfig((current) => {
@@ -21,11 +24,10 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
         return { key, direction: "asc" };
       }
 
-      if (current.direction === "asc") {
-        return { key, direction: "desc" };
-      }
-
-      return null;
+      return {
+        key,
+        direction: current.direction === "asc" ? "desc" : "asc",
+      };
     });
   };
 
@@ -34,12 +36,12 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
       return menuItem;
     }
 
-    const sorted = [...menuItem];
+    const { key, direction } = sortConfig;
+    const directionMultiplier = direction === "asc" ? 1 : -1;
 
-    sorted.sort((a, b) => {
-      const valueA = a[sortConfig.key];
-      const valueB = b[sortConfig.key];
-      const directionMultiplier = sortConfig.direction === "asc" ? 1 : -1;
+    return [...menuItem].sort((a, b) => {
+      const valueA = a[key];
+      const valueB = b[key];
 
       if (typeof valueA === "number" && typeof valueB === "number") {
         return (valueA - valueB) * directionMultiplier;
@@ -51,9 +53,19 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
         }) * directionMultiplier
       );
     });
-
-    return sorted;
   }, [menuItem, sortConfig]);
+
+  const sortIndicator = (key: SortKey) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <span className="ms-2 text-muted">↕</span>;
+    }
+
+    return sortConfig.direction === "asc" ? (
+      <BsChevronUp className="ms-2" />
+    ) : (
+      <BsChevronDown className="ms-2" />
+    );
+  };
 
   const getAriaSort = (key: SortKey): "ascending" | "descending" | "none" => {
     if (sortConfig?.key !== key) {
@@ -63,92 +75,74 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
     return sortConfig.direction === "asc" ? "ascending" : "descending";
   };
 
-  const renderSortIndicator = (key: SortKey) => {
-    if (sortConfig?.key !== key) {
-      return " \u2195";
-    }
-
-    return sortConfig.direction === "asc" ? " \u2191" : " \u2193";
-  };
-
-  const getSortButtonClass = (key: SortKey) => {
-    const base = "btn btn-link w-100 text-start p-0 text-decoration-none";
-    const isActive = sortConfig?.key === key && sortConfig.direction;
-    return `${base} ${isActive ? "text-warning fw-semibold" : "text-white"}`;
-  };
-
-    return (
-        <div className="table-responsive">
-          <table className="table table-striped table-bordered">
-            <colgroup>
-              <col style={{ width: "24%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "8%" }} />
-            </colgroup>
-            <thead className="table-dark">
-              <tr>
-                <th
-                  scope="col"
-                  aria-sort={getAriaSort("name")}
-                >
-                  <button
-                    type="button"
-                    className={getSortButtonClass("name")}
-                    onClick={() => handleSort("name")}
-                  >
-                    Item{renderSortIndicator("name")}
-                  </button>
-                </th>
-                <th
-                  scope="col"
-                  aria-sort={getAriaSort("price")}
-                >
-                  <button
-                    type="button"
-                    className={getSortButtonClass("price")}
-                    onClick={() => handleSort("price")}
-                  >
-                    Price{renderSortIndicator("price")}
-                  </button>
-                </th>
-                <th
-                  scope="col"
-                  aria-sort={getAriaSort("category")}
-                >
-                  <button
-                    type="button"
-                    className={getSortButtonClass("category")}
-                    onClick={() => handleSort("category")}
-                  >
-                    Category{renderSortIndicator("category")}
-                  </button>
-                </th>
-                <th
-                  scope="col"
-                  aria-sort={getAriaSort("description")}
-                >
-                  <button
-                    type="button"
-                    className={getSortButtonClass("description")}
-                    onClick={() => handleSort("description")}
-                  >
-                    Description{renderSortIndicator("description")}
-                  </button>
-                </th>
-                <th scope="col" className="text-center">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+  return (
+    <div className="table-responsive">
+      <table className="table table-hover align-middle">
+        <colgroup>
+          <col style={{ width: "22%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "18%" }} />
+          <col style={{ width: "38%" }} />
+          <col style={{ width: "10%" }} />
+        </colgroup>
+        <thead className="bg-light text-secondary">
+          <tr>
+            <th
+              scope="col"
+              onClick={() => handleSort("name")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              aria-sort={getAriaSort("name")}
+            >
+              <span className="d-inline-flex align-items-center">
+                Item
+                {sortIndicator("name")}
+              </span>
+            </th>
+            <th
+              scope="col"
+              onClick={() => handleSort("price")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              aria-sort={getAriaSort("price")}
+            >
+              <span className="d-inline-flex align-items-center">
+                Price
+                {sortIndicator("price")}
+              </span>
+            </th>
+            <th
+              scope="col"
+              onClick={() => handleSort("category")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              aria-sort={getAriaSort("category")}
+            >
+              <span className="d-inline-flex align-items-center">
+                Category
+                {sortIndicator("category")}
+              </span>
+            </th>
+            <th
+              scope="col"
+              onClick={() => handleSort("description")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              aria-sort={getAriaSort("description")}
+            >
+              <span className="d-inline-flex align-items-center">
+                Description
+                {sortIndicator("description")}
+              </span>
+            </th>
+            <th scope="col" className="text-center">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody>
           {sortedItems.map((item) => (
             <tr key={item.id}>
-              <td>{item.name} </td>
-              <td>{item.price} </td>
-              <td>{item.category}</td>
-              <td>{item.description}</td>
+              <td>{item.name}</td>
+              <td>{item.price}</td>
+              <td>{item.category || "Uncategorized"}</td>
+              <td className="text-muted">{item.description || "—"}</td>
               <td className="text-center">
                 <button
                   type="button"
@@ -161,7 +155,7 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
             </tr>
           ))}
         </tbody>
-            </table>
-        </div>
-      );
-};
+      </table>
+    </div>
+  );
+}

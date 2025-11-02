@@ -37,7 +37,6 @@ builder.Services.AddSingleton(_ => new SquareClient(
             ? SquareEnvironment.Production
             : SquareEnvironment.Sandbox
     }));
-builder.Services.AddSingleton<SquareOAuthService>();
 // Register minimal services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

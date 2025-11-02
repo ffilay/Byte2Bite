@@ -67,3 +67,5 @@ expo-env.d.ts
 # .NET build artifacts
 backend/bin/
 backend/obj/
+
+frontend/.expo/

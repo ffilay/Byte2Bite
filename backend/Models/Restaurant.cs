@@ -10,19 +10,16 @@ namespace backend.Models
         public int Id { get; set; }
 
         [Column("name")]
-        public string? Name { get; set; }
-
-        [Column("price")]
-        public float Price { get; set; }
+        public string Name { get; set; } = null!;
 
         [Column("zip")]
-        public int ZipCode { get; set; }
+        public string ZipCode { get; set; } = null!;
 
         [Column("square_merchant_id")]
-        public int? SquareId { get; set; }
+        public string SquareId { get; set; } = null!;
 
         [Column("square_access_token")]
-        public string? SquareAccessToken { get; set; }
+        public string SquareAccessToken { get; set; } = null!;
 
     }
 }

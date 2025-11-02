@@ -4,6 +4,9 @@ using backend.Mapping;
 using Square;
 using Square.Catalog;
 using Supabase;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,20 +19,16 @@ var environment = builder.Configuration["Square:Environment"] ?? "sandbox";
 // Supabase API
 var supabaseUrl = builder.Configuration["Supabase:Url"]
     ?? throw new InvalidOperationException("Supabase:Url is missing.");
-var supabaseKey = builder.Configuration["Supabase:Key"]
+var supabaseAnonKey = builder.Configuration["Supabase:AnonKey"]
+    ?? throw new InvalidOperationException("Supabase:Key is missing.");
+var supabaseServiceKey = builder.Configuration["Supabase:ServiceKey"]
     ?? throw new InvalidOperationException("Supabase:Key is missing.");
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+
 builder.Services.AddScoped<ISupabaseService, SupabaseService>();
 builder.Services.AddScoped<ISquareMenuSyncService, SquareMenuSyncService>();
-
-// Register minimal services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Register the Square client so you can inject it later
 builder.Services.AddSingleton(_ => new SquareClient(
     token: accessToken,
     clientOptions: new ClientOptions
@@ -38,14 +37,25 @@ builder.Services.AddSingleton(_ => new SquareClient(
             ? SquareEnvironment.Production
             : SquareEnvironment.Sandbox
     }));
+builder.Services.AddSingleton<SquareOAuthService>();
+// Register minimal services
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Register the Supabase client
-builder.Services.AddSingleton<Client>(sp =>
-{
-    var client = new Client(supabaseUrl, supabaseKey);
-    client.InitializeAsync().Wait(); // blocking init, fine for startup
-    return client;
-});
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MetadataAddress = $"{supabaseUrl}/auth/v1/.well-known/jwks.json";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidIssuer = supabaseUrl
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -61,7 +71,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors("AllowReactApp");
-//app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseHttpsRedirection();
 app.MapControllers();
 
 await RunSquareSmokeTestAsync(app.Services);
@@ -124,7 +136,8 @@ static async Task RunSquareSmokeTestAsync(IServiceProvider services)
 static async Task RunSupabaseSmokeTestAsync(IServiceProvider services)
 {
     await using var scope = services.CreateAsyncScope();
-    var client = scope.ServiceProvider.GetRequiredService<Client>();
+    var supabaseService = scope.ServiceProvider.GetRequiredService<ISupabaseService>();
+    var client = supabaseService.Client;
 
     try
     {

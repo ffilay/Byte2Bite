@@ -1,7 +1,10 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState, useEffect } from 'react';
 import { Button, Modal, Form } from "react-bootstrap";
-import { ingredientsService, Ingredient } from '../../services/ingredientService'
+import { ingredientsService, Ingredient } from '../../services/ingredientService';
+
+const UNIT_OPTIONS = ["g", "kg", "oz", "lbs", "mL", "L", "gal", "count"] as const;
+type UnitOption = typeof UNIT_OPTIONS[number];
 
 type Props = {
     show: boolean; // controlled by parent
@@ -14,7 +17,7 @@ type Props = {
     const [newIngredient, setNewIngredient] = useState<Ingredient>({
         id: 0,
         name: "",
-        unit: "",
+        unit: UNIT_OPTIONS[0],
         cost_Per_Case: 0,
         cost_Per_Unit: 0,
         current_Stock: 0,
@@ -24,13 +27,18 @@ type Props = {
 
     useEffect(() => {
         if (ingredientToEdit) {
-            setNewIngredient(ingredientToEdit);
+            const normalizedUnit =
+              ingredientToEdit.unit
+                ? UNIT_OPTIONS.find((option) => option.toLowerCase() === ingredientToEdit.unit.toLowerCase()) ?? UNIT_OPTIONS[0]
+                : UNIT_OPTIONS[0];
+
+            setNewIngredient({ ...ingredientToEdit, unit: normalizedUnit });
         }
         else {
             setNewIngredient({
                 id: 0,
                 name: "",
-                unit: "",
+                unit: UNIT_OPTIONS[0],
                 cost_Per_Case: 0,
                 cost_Per_Unit: 0,
                 current_Stock: 0,
@@ -77,13 +85,18 @@ type Props = {
                     </Form.Group>
                     <Form.Group className="mb-2">
                       <Form.Label>Unit</Form.Label>
-                      <Form.Control
-                        type="text"
+                      <Form.Select
                         value={newIngredient.unit}
                         onChange={(e) =>
-                          setNewIngredient({ ...newIngredient, unit: e.target.value })
+                          setNewIngredient({ ...newIngredient, unit: e.target.value as UnitOption })
                         }
-                      />
+                      >
+                        {UNIT_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Form.Select>
                     </Form.Group>
                     <Form.Group className="mb-2">
                       <Form.Label>Cost per Case</Form.Label>

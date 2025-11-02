@@ -1,9 +1,9 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BsTrash } from "react-icons/bs";
-import { MenuItem, menuService } from '../../services/menuService'
+import { Items, menuService } from '../../services/menuService'
 
 type Props = {
-  menuItem: MenuItem[];
+  menuItem: Items[];
 };
 
 export default function MenuTable({ menuItem }: Props) {

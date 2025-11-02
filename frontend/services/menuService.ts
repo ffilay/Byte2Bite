@@ -1,5 +1,5 @@
 // services/menuService.ts
-export interface MenuItem {
+export interface Items{
     id: number;
     name: string;
     price: number;
@@ -8,9 +8,9 @@ export interface MenuItem {
     //restaurantID?
   }
 
-    const API_URL = "http://localhost:5038/api/items";
+    const API_URL = "http://localhost:5038/api/menu";
 
-    async function getAllMenuItems(): Promise<MenuItem[]> {
+    async function getAllMenuItems(): Promise<Items[]> {
       const res = await fetch(API_URL, {
         method: "GET",
         headers: { "Content-Type": "application/json" },

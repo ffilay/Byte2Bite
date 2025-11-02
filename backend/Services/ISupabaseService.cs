@@ -20,5 +20,6 @@ namespace backend.Services
         Task<UserProfile?> CreateUserAsync(UserProfile user);
         Task<UserProfile?> UpdateUserAsync(int id, UserProfile user);
         Task<bool> DeleteUserAsync(int id);
+        Task<IEnumerable<Item>> GetItemsAsync(int limit = 100);
     }
 }

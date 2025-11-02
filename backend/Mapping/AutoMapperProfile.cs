@@ -21,7 +21,7 @@ namespace backend.Mapping
             CreateMap<UserProfile, UserDto>().ReverseMap();
 
             // Map ItemDto -> Item
-            CreateMap<ItemDto, Item>();
+            CreateMap<Item, ItemDto>().ReverseMap();
 
             // Map DistributorDto -> Distributor
             CreateMap<DistributorDto, Distributor>();

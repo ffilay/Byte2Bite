@@ -14,6 +14,12 @@ namespace backend.Mapping
             // Map Ingredient <-> WriteIngredientDto
             CreateMap<Ingredient, WriteIngredientDto>().ReverseMap();
 
+            // Map Restaurant <-> RestaurantDto
+            CreateMap<Restaurant, RestaurantDto>().ReverseMap();
+
+            // Map UserProfile <-> UserDto
+            CreateMap<UserProfile, UserDto>().ReverseMap();
+
             // Map ItemDto -> Item
             CreateMap<Item, ItemDto>().ReverseMap();
 

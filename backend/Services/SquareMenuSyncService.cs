@@ -8,12 +8,12 @@ namespace backend.Services
     public class SquareMenuSyncService : ISquareMenuSyncService
     {
         private readonly SquareClient _square;
-        private readonly Client _supabase;
+        private readonly Supabase.Client _supabase;
 
-        public SquareMenuSyncService(SquareClient squareClient, Client supabaseClient)
+        public SquareMenuSyncService(SquareClient squareClient, ISupabaseService supabaseService)
         {
             _square = squareClient;
-            _supabase = supabaseClient;
+            _supabase = supabaseService.Client;
         }
 
         public async Task<int> ImportMenuItemsAsync(int restaurantId, CancellationToken cancellationToken = default)

@@ -56,5 +56,14 @@ namespace backend.Services
                                         .Delete();
             return true;
         }
+
+        public async Task<IEnumerable<Item>> GetItemsAsync(int limit = 100)
+        {
+            var response = await _client.From<Item>()
+                                        .Select("*")
+                                        .Limit(limit)
+                                        .Get();
+            return response.Models;
+        }
     }
 }

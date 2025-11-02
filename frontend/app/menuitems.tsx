@@ -1,20 +1,83 @@
-import { View, Text, Button, Modal, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import MenuItemModal from "./components/MenuItemModal";
+import MenuTable from "./components/MenuTable";
+import { Items, menuService } from "@/services/menuService";
+import { useEffect, useState } from "react";
 
 export default function IngredientsPage() {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newIngredientName, setNewIngredientName] = useState("");
+  const [items, setItems] = useState<Items[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedItem, setSelectedItem] = useState<Items | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const importSquareCatalog = async () => {
+      try {
+        const data = await menuService.importMenuItems(
+          1 /*hardcoded to sandbox for now*/
+        );
+      } catch (err) {
+        console.error("Error importing square catalog:", err);
+      }
+    };
+    importSquareCatalog();
+  }, []);
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const data = await menuService.getAllMenuItems();
+        console.log("Fetched menu items:", data);
+        setItems(data);
+      } catch (err) {
+        console.error("Error fetching menu items:", err);
+      }
+    };
+    fetchMenuItems();
+  }, []);
+
+  console.log("Menu items:", items);
+
+  const normalizedTerm = searchTerm.trim().toLowerCase();
+  const filteredItems = normalizedTerm
+    ? items.filter(
+        (item) =>
+          item.name?.toLowerCase().includes(normalizedTerm) ||
+          item.category?.toLowerCase().includes(normalizedTerm) ||
+          item.description?.toLowerCase().includes(normalizedTerm)
+      )
+    : items;
+
+  const handleEditItem = (item: Items) => {
+    setSelectedItem(item);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedItem(null);
+  };
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-        Menu Items
-      </Text>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Button title="Add Menu Item" onPress={() => console.log("Add works")}/>
-        <Button title="Update Menu Item" onPress={() => console.log("Update works")}/>
-        <Button title="Delete Menu Item" onPress={() => console.log("Delete works")}/>
-      </View>
-            </View>
+    <div className="container mt-4">
+      <MenuItemModal
+        show={showModal}
+        onClose={handleCloseModal}
+        menuItem={selectedItem ?? undefined}
+      />
+      <h3 className="mt-4">Menu Inventory:</h3>
+      <div className="row mt-3">
+        <div className="col-md-6 col-lg-4">
+          <input
+            type="search"
+            className="form-control"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by item, category, or description"
+            aria-label="Search menu items"
+          />
+        </div>
+      </div>
+      <MenuTable menuItem={filteredItems} onEdit={handleEditItem} />
+    </div>
   );
 }

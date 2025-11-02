@@ -9,5 +9,6 @@ namespace backend.Services
         Task<Ingredient?> CreateIngredientAsync(Ingredient ingredient);
         Task<Ingredient?> UpdateIngredientAsync(int id, Ingredient ingredient);
         Task<bool> DeleteIngredientAsync(int id);
+        Task<IEnumerable<Item>> GetItemsAsync(int limit = 100);
     }
 }

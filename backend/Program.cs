@@ -20,9 +20,9 @@ var environment = builder.Configuration["Square:Environment"] ?? "sandbox";
 var supabaseUrl = builder.Configuration["Supabase:Url"]
     ?? throw new InvalidOperationException("Supabase:Url is missing.");
 var supabaseAnonKey = builder.Configuration["Supabase:AnonKey"]
-    ?? throw new InvalidOperationException("Supabase:Key is missing.");
+    ?? throw new InvalidOperationException("Supabase:AnonKey is missing.");
 var supabaseServiceKey = builder.Configuration["Supabase:ServiceKey"]
-    ?? throw new InvalidOperationException("Supabase:Key is missing.");
+    ?? throw new InvalidOperationException("Supabase:ServiceKey is missing.");
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));

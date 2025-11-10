@@ -87,8 +87,16 @@ if(app.Environment.IsDevelopment()){
     });
 }
 
-await app.RunAsync();
+// Run Square → Supabase menu sync at startup (before the server blocks)
+var restaurantId = 1; // TODO: replace with your real restaurant id or config
+await using (var syncScope = app.Services.CreateAsyncScope())
+{
+    var sync = syncScope.ServiceProvider.GetRequiredService<ISquareMenuSyncService>();
+    var upserted = await sync.ImportMenuItemsAsync(restaurantId);
+    Console.WriteLine($"Square sync completed: {upserted} item(s) upserted for restaurant {restaurantId}.");
+}
 
+await app.RunAsync();
 static async Task RunSquareSmokeTestAsync(IServiceProvider services)
 {
     await using var scope = services.CreateAsyncScope();

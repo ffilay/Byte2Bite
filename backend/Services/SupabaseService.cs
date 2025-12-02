@@ -1,5 +1,6 @@
 using backend.Models;
 using Supabase;
+using System.Linq;
 
 namespace backend.Services
 {
@@ -162,6 +163,68 @@ namespace backend.Services
             await _client.From<UserProfile>()
                                         .Where(i => i.Id == id)
                                         .Delete();
+            return true;
+        }
+
+        public async Task<IEnumerable<Ingredients2Items>> GetIngredientsForItemAsync(int itemId)
+        {
+            var response = await _client.From<Ingredients2Items>()
+                                        .Where(i => i.Item_Id == itemId)
+                                        .Get();
+            return response.Models;
+        }
+
+        public async Task<Ingredients2Items?> GetIngredientForItemAsync(int itemId, int ingredientId)
+        {
+            var response = await _client.From<Ingredients2Items>()
+                                        .Where(i => i.Item_Id == itemId)
+                                        .Where(i => i.Ingredient_Id == ingredientId)
+                                        .Limit(1)
+                                        .Get();
+            return response.Models.FirstOrDefault();
+        }
+
+        public async Task<Ingredients2Items?> AddIngredientToItemAsync(Ingredients2Items link)
+        {
+            var response = await _client.From<Ingredients2Items>()
+                                        .Insert(link);
+
+            var created = response.Models.FirstOrDefault();
+            if (created == null) return null;
+
+            return await GetIngredientForItemAsync(link.Item_Id, link.Ingredient_Id);
+        }
+
+        public async Task<Ingredients2Items?> UpdateIngredientQuantityAsync(int itemId, int ingredientId, float quantity)
+        {
+            var payload = new Ingredients2Items
+            {
+                Item_Id = itemId,
+                Ingredient_Id = ingredientId,
+                Ingredient_Quantity = quantity
+            };
+
+            await _client.From<Ingredients2Items>()
+                        .Where(i => i.Item_Id == itemId)
+                        .Where(i => i.Ingredient_Id == ingredientId)
+                        .Update(payload);
+
+            return await GetIngredientForItemAsync(itemId, ingredientId);
+        }
+
+        public async Task<bool> DeleteIngredientFromItemAsync(int itemId, int ingredientId)
+        {
+            var existing = await _client.From<Ingredients2Items>()
+                                        .Where(i => i.Item_Id == itemId)
+                                        .Where(i => i.Ingredient_Id == ingredientId)
+                                        .Get();
+            if (!existing.Models.Any())
+                return false;
+
+            await _client.From<Ingredients2Items>()
+                         .Where(i => i.Item_Id == itemId)
+                         .Where(i => i.Ingredient_Id == ingredientId)
+                         .Delete();
             return true;
         }
     }

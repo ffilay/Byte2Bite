@@ -1,5 +1,6 @@
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
+using Newtonsoft.Json;
 
 namespace backend.Models
 {
@@ -15,8 +16,10 @@ namespace backend.Models
         [Column("ingredient_quantity")]
         public float Ingredient_Quantity { get; set; }
 
+        [JsonIgnore]
         public Item? Item { get; set; }
 
+        [JsonIgnore]
         public Ingredient? Ingredient { get; set; }
     }
 }

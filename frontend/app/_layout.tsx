@@ -97,6 +97,7 @@ export default function RootLayout() {
     { href: "/", label: "Home" },
     { href: "/ingredients", label: "Ingredients" },
     { href: "/menuitems", label: "Menu Items" },
+    { href: "/transactions", label: "Transactions" },
   ];
 
   const handleLogout = async () => {

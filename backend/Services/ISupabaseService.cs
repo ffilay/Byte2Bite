@@ -26,5 +26,12 @@ namespace backend.Services
         Task<Ingredients2Items?> AddIngredientToItemAsync(Ingredients2Items link);
         Task<Ingredients2Items?> UpdateIngredientQuantityAsync(int itemId, int ingredientId, float quantity);
         Task<bool> DeleteIngredientFromItemAsync(int itemId, int ingredientId);
+
+        Task<Item?> GetItemBySquareVariationIdAsync(string squareVariationId, int restaurantId);
+        Task<DateTimeOffset?> GetLastSquareOrderSyncAsync(int restaurantId);
+        Task SetLastSquareOrderSyncAsync(int restaurantId, DateTimeOffset timestamp);
+        Task<long> UpsertOrderAsync(OrderRecord order, IEnumerable<OrderLineItemRecord> lineItems);
+        Task DeductInventoryForOrderAsync(IEnumerable<OrderLineItemRecord> lineItems);
+        Task<IEnumerable<TransactionView>> GetTransactionsAsync(int limit = 50);
     }
 }

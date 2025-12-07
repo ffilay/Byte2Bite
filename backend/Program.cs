@@ -29,6 +29,8 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 builder.Services.AddScoped<ISupabaseService, SupabaseService>();
 builder.Services.AddScoped<ISquareMenuSyncService, SquareMenuSyncService>();
+builder.Services.AddScoped<ISquareOrderSyncService, SquareOrderSyncService>();
+builder.Services.AddHostedService<SquareOrderSyncBackgroundService>();
 builder.Services.AddSingleton(_ => new SquareClient(
     token: accessToken,
     clientOptions: new ClientOptions
@@ -75,8 +77,9 @@ app.UseAuthorization();
 app.UseHttpsRedirection();
 app.MapControllers();
 
+using var startupCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+await RunSupabaseSmokeTestAsync(app.Services, startupCts.Token);
 await RunSquareSmokeTestAsync(app.Services);
-await RunSupabaseSmokeTestAsync(app.Services);
 
 if(app.Environment.IsDevelopment()){
     app.UseSwagger();
@@ -92,8 +95,20 @@ var restaurantId = 1; // TODO: replace with your real restaurant id or config
 await using (var syncScope = app.Services.CreateAsyncScope())
 {
     var sync = syncScope.ServiceProvider.GetRequiredService<ISquareMenuSyncService>();
-    var upserted = await sync.ImportMenuItemsAsync(restaurantId);
-    Console.WriteLine($"Square sync completed: {upserted} item(s) upserted for restaurant {restaurantId}.");
+    try
+    {
+        using var syncCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var upserted = await sync.ImportMenuItemsAsync(restaurantId, syncCts.Token);
+        Console.WriteLine($"Square sync completed: {upserted} item(s) upserted for restaurant {restaurantId}.");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("Square menu sync startup skipped due to timeout.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Square menu sync startup failed: {ex.Message}");
+    }
 }
 
 await app.RunAsync();
@@ -101,13 +116,11 @@ static async Task RunSquareSmokeTestAsync(IServiceProvider services)
 {
     await using var scope = services.CreateAsyncScope();
     var client = scope.ServiceProvider.GetRequiredService<SquareClient>();
+    int count = 0;
 
     try
     {
         var pager = await client.Catalog.ListAsync(new ListCatalogRequest());
-        var printed = false;
-
-        Console.WriteLine("Square catalog items:");
 
         await foreach (var catalogObject in pager)
         {
@@ -121,18 +134,10 @@ static async Task RunSquareSmokeTestAsync(IServiceProvider services)
                 continue;
             }
 
-            var name = item.ItemData?.Name;
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                Console.WriteLine($"- {name}");
-                printed = true;
-            }
+            count +=1;
         }
 
-        if (!printed)
-        {
-            Console.WriteLine("Square catalog list succeeded but no item names were found.");
-        }
+        Console.WriteLine(count + " item(s) found in Square");
     }
     catch (SquareApiException ex)
     {
@@ -140,7 +145,7 @@ static async Task RunSquareSmokeTestAsync(IServiceProvider services)
     }
 }
 
-static async Task RunSupabaseSmokeTestAsync(IServiceProvider services)
+static async Task RunSupabaseSmokeTestAsync(IServiceProvider services, CancellationToken cancellationToken = default)
 {
     await using var scope = services.CreateAsyncScope();
     var supabaseService = scope.ServiceProvider.GetRequiredService<ISupabaseService>();
@@ -149,7 +154,7 @@ static async Task RunSupabaseSmokeTestAsync(IServiceProvider services)
     try
     {
         // Just a basic call to ensure Supabase connection works
-        var response = await client.From<Ingredient>().Get();
+        var response = await client.From<Ingredient>().Get(cancellationToken: cancellationToken);
         Console.WriteLine($"Supabase connected, retrieved {response.Models.Count} row(s).");
     }
     catch (Exception ex)

@@ -1,6 +1,7 @@
 using backend.Models;
 using Supabase;
 using System.Linq;
+using Supabase.Postgrest.Exceptions;
 
 namespace backend.Services
 {
@@ -226,6 +227,147 @@ namespace backend.Services
                          .Where(i => i.Ingredient_Id == ingredientId)
                          .Delete();
             return true;
+        }
+
+        public async Task<Item?> GetItemBySquareVariationIdAsync(string squareVariationId, int restaurantId)
+        {
+            var response = await _client.From<Item>()
+                .Where(i => i.Restaurant_Id == restaurantId && i.Square_Variation_Id == squareVariationId)
+                .Limit(1)
+                .Get();
+            return response.Models.FirstOrDefault();
+        }
+
+        public async Task<DateTimeOffset?> GetLastSquareOrderSyncAsync(int restaurantId)
+        {
+            var response = await _client.From<SquareSyncState>()
+                .Where(s => s.Restaurant_Id == restaurantId)
+                .Limit(1)
+                .Get();
+            var state = response.Models.FirstOrDefault();
+            return state?.Last_Success_At;
+        }
+
+        public async Task SetLastSquareOrderSyncAsync(int restaurantId, DateTimeOffset timestamp)
+        {
+            var state = new SquareSyncState
+            {
+                Restaurant_Id = restaurantId,
+                Last_Success_At = timestamp
+            };
+
+            // Upsert-like behavior: try update, if 0 rows then insert
+            var existing = await _client.From<SquareSyncState>()
+                .Where(s => s.Restaurant_Id == restaurantId)
+                .Limit(1)
+                .Get();
+
+            if (existing.Models.Any())
+            {
+                await _client.From<SquareSyncState>()
+                    .Where(s => s.Restaurant_Id == restaurantId)
+                    .Update(state);
+            }
+            else
+            {
+                await _client.From<SquareSyncState>().Insert(state);
+            }
+        }
+
+        public async Task<long> UpsertOrderAsync(OrderRecord order, IEnumerable<OrderLineItemRecord> lineItems)
+        {
+            // Find existing by Square order id
+            var existingResponse = await _client.From<OrderRecord>()
+                .Where(o => o.Square_Order_Id == order.Square_Order_Id)
+                .Limit(1)
+                .Get();
+
+            OrderRecord? existing = existingResponse.Models.FirstOrDefault();
+
+            if (existing is null)
+            {
+                var insertResp = await _client.From<OrderRecord>().Insert(order);
+                var created = insertResp.Models.First();
+                await ReplaceLineItemsAsync(created.Id, lineItems);
+                return created.Id;
+            }
+            else
+            {
+                order.Id = existing.Id;
+                await _client.From<OrderRecord>()
+                    .Where(o => o.Id == existing.Id)
+                    .Update(order);
+
+                await ReplaceLineItemsAsync(existing.Id, lineItems);
+                return existing.Id;
+            }
+        }
+
+        public async Task DeductInventoryForOrderAsync(IEnumerable<OrderLineItemRecord> lineItems)
+        {
+            foreach (var line in lineItems)
+            {
+                if (line.Item_Id is null)
+                    continue;
+
+                var links = await GetIngredientsForItemAsync(line.Item_Id.Value);
+                foreach (var link in links)
+                {
+                    var qtyUsed = (decimal)link.Ingredient_Quantity * line.Quantity;
+                    // Update ingredient stock
+                    var ingredientResp = await _client.From<Ingredient>()
+                        .Where(i => i.Id == link.Ingredient_Id)
+                        .Limit(1)
+                        .Get();
+                    var ingredient = ingredientResp.Models.FirstOrDefault();
+                    if (ingredient is null) continue;
+
+                    ingredient.Current_Stock -= qtyUsed;
+                    if (ingredient.Current_Stock < 0) ingredient.Current_Stock = 0;
+
+                    await _client.From<Ingredient>()
+                        .Where(i => i.Id == ingredient.Id)
+                        .Update(ingredient);
+
+                    // Log usage
+                    var log = new Inventory_Log
+                    {
+                        Ingredient_Id = ingredient.Id,
+                        Date = DateTime.UtcNow,
+                        Quantity_Used = (float)qtyUsed
+                    };
+                    await _client.From<Inventory_Log>().Insert(log);
+                }
+            }
+        }
+
+        private async Task ReplaceLineItemsAsync(long orderId, IEnumerable<OrderLineItemRecord> lineItems)
+        {
+            await _client.From<OrderLineItemRecord>()
+                .Where(li => li.Order_Id == orderId)
+                .Delete();
+
+            var toInsert = lineItems.Select(li =>
+            {
+                li.Order_Id = orderId;
+                return li;
+            }).ToList();
+
+            if (toInsert.Count > 0)
+            {
+                await _client.From<OrderLineItemRecord>().Insert(toInsert);
+            }
+        }
+
+        public async Task<IEnumerable<TransactionView>> GetTransactionsAsync(int limit = 50)
+        {
+            var response = await _client.From<TransactionView>()
+                .Select("*")
+                .Order("square_created_at", Supabase.Postgrest.Constants.Ordering.Descending)
+                .Limit(limit)
+                .Get();
+
+            return response.Models;
         }
     }
 }

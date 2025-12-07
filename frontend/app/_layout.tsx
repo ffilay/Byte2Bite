@@ -78,7 +78,7 @@ export default function RootLayout() {
     return () => listener.subscription.unsubscribe();
   }, [pathname, router]);
 
-  // 6️⃣ Loading screen
+  // Loading screen
   if (isAuthenticated === null) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

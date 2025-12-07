@@ -37,5 +37,11 @@ namespace backend.Models
 
         [Column("variation_name")]
         public string? Variation_Name { get; set; }
+
+        [Column("total_cost")]
+        public decimal? Total_Cost { get; set; }
+
+        [Column("profit_margin")]
+        public decimal? Profit_Margin { get; set; }
     }
 }

@@ -130,6 +130,20 @@ export default function MenuItemsPage() {
     return Math.max(...items.map((item) => item.price ?? 0));
   }, [items]);
 
+  const averageMargin = useMemo(() => {
+    if (!items.length) return null;
+    const margins = items
+      .map((item) => {
+        const totalCost = (item as any).totalCost ?? (item as any).total_cost ?? 0;
+        if (!item.price || item.price === 0) return null;
+        return (item.price - totalCost) / item.price;
+      })
+      .filter((m): m is number => m !== null && Number.isFinite(m));
+    if (!margins.length) return null;
+    const sum = margins.reduce((acc, m) => acc + m, 0);
+    return sum / margins.length;
+  }, [items]);
+
   const currencyFormatter = useMemo(
     () =>
       new Intl.NumberFormat("en-US", {
@@ -157,8 +171,11 @@ export default function MenuItemsPage() {
       variant: "success" as const,
     },
     {
-      title: "Top Price",
-      value: topPrice !== null ? currencyFormatter.format(topPrice) : "--",
+      title: "Average Profit Margin",
+      value:
+        averageMargin !== null
+          ? `${(averageMargin * 100).toFixed(1)}%`
+          : "--",
       variant: "warning" as const,
     },
   ];

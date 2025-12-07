@@ -18,5 +18,9 @@ namespace backend.Dtos
 
         [Required]
         public string Description { get; set; } = null!;
+
+        public decimal? TotalCost { get; set; }
+
+        public decimal? ProfitMargin { get; set; }
     }
 }

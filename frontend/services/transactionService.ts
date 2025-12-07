@@ -19,6 +19,10 @@ export interface Transaction {
   line_items: TransactionLineItem[] | null;
 }
 
+export interface TransactionSyncState {
+  last_success_at: string | null;
+}
+
 const toNumberOrNull = (v: any): number | null => {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
@@ -54,4 +58,16 @@ export async function fetchTransactions(limit = 50): Promise<Transaction[]> {
     square_updated_at: t.square_updated_at ?? t.Square_Updated_At ?? null,
     line_items: normalizeLineItems(t.line_items ?? t.Line_Items),
   }));
+}
+
+export async function fetchTransactionSyncState(): Promise<TransactionSyncState> {
+  const res = await fetch("http://localhost:5038/api/transactions/last-sync");
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Failed to fetch transaction sync state");
+  }
+  const data = await res.json();
+  return {
+    last_success_at: data?.last_success_at ?? null,
+  };
 }

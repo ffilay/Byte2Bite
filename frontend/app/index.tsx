@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { supabase } from "../services/supabaseClient";
 import { useRouter } from "expo-router";
+
+// 👇 Adjust imports to match your structure
 import { menuService, Items } from "../services/menuService";
 import {
   ingredientsService,
@@ -17,7 +19,7 @@ import {
 import {
   fetchTransactions,
   Transaction,
-} from "../services/transactionService";
+} from "../services/transactionService"; // 🔵 NEW
 
 const UNCATEGORIZED_LABEL = "Uncategorized";
 
@@ -43,7 +45,7 @@ export default function HomeScreen() {
   const [items, setItems] = useState<Items[]>([]);
   // INGREDIENTS
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  // TRANSACTIONS
+  // 🔵 TRANSACTIONS
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const [dashboardLoading, setDashboardLoading] = useState(true);
@@ -113,7 +115,7 @@ export default function HomeScreen() {
         setDashboardLoading(true);
         setDashboardError(null);
 
-        // fetch menu, ingredients, and transactions in parallel
+        // 🔵 fetch menu, ingredients, and transactions in parallel
         const [menuData, ingredientData, transactionData] = await Promise.all([
           menuService.getAllMenuItems(),
           ingredientsService.getAllIngredients(),
@@ -182,7 +184,7 @@ export default function HomeScreen() {
     );
   }, [ingredients]);
 
-  //TRANSACTION METRICS
+  // 🔵 TRANSACTION METRICS
   const totalTransactions = transactions.length;
 
   const totalRevenue = useMemo(() => {
@@ -333,7 +335,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Row 5: Transaction / sales metrics */}
+      {/* 🔵 Row 5: Transaction / sales metrics */}
       <View style={styles.cardsRow}>
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Total Transactions</Text>

@@ -171,6 +171,14 @@ namespace backend.Services
             return true;
         }
 
+        public async Task<IEnumerable<UserProfile>> GetUsersAsync(int limit = 100)
+        {
+            var response = await _client.From<UserProfile>()
+                                        .Select("*")
+                                        .Limit(limit)
+                                        .Get();
+            return response.Models;
+        }
         public async Task<UserProfile?> GetUserByIdAsync(int id)
         {
             var response = await _client.From<UserProfile>()

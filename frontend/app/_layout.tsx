@@ -136,7 +136,10 @@ export default function RootLayout() {
             router.replace("/");
           }
         }
-        if (_event === "SIGNED_OUT") router.replace("/login");
+        if (_event === "SIGNED_OUT") {
+          setEmailPending(null);
+          router.replace("/login");
+        }
       }
     );
 
@@ -158,7 +161,19 @@ export default function RootLayout() {
   ];
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // Clear local state immediately so UI updates even if network call fails
+    setIsAuthenticated(false);
+    setEmailPending(null);
+    try {
+      // Always clear local session so guards stop treating the user as logged-in
+      await supabase.auth.signOut({ scope: "local" });
+      // Best-effort revoke on the server (ignore errors so UI still routes away)
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+      if (error) console.warn("Supabase logout (global) failed:", error.message);
+    } catch (err) {
+      console.error("Unexpected logout error:", err);
+    }
+    router.replace("/login");
   };
 
   return (

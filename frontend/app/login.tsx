@@ -6,6 +6,8 @@ import {
   Button,
   ActivityIndicator,
   StyleSheet,
+  Platform,
+  Alert
 } from "react-native";
 import { useRouter } from "expo-router";
 import { supabase } from "../services/supabaseClient";
@@ -17,6 +19,16 @@ export default function LoginScreen() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+
+  const showAlert = (title: string, message: string) => {
+  if (Platform.OS === "web") {
+    // In web, use the browser's alert
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    // In iOS/Android, use React Native's Alert
+    Alert.alert(title, message);
+  }
+};
 
   useEffect(() => {
     const checkSession = async () => {
@@ -64,6 +76,41 @@ export default function LoginScreen() {
     );
   }
 
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      showAlert("Missing email", "Please enter your email address first.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: "http://localhost:8081/reset-password",
+      });
+
+      if (error) {
+        console.error("Password reset error:", error);
+        showAlert("Reset failed", error.message);
+        return;
+      }
+
+      showAlert(
+        "Check your email",
+        "If an account exists with that email, a password reset link has been sent."
+      );
+    } catch (err: any) {
+      console.error("Unexpected forgot-password error:", err);
+      showAlert(
+        "Error",
+        "Something went wrong while sending the reset email. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
@@ -93,6 +140,10 @@ export default function LoginScreen() {
 
       {loading && <ActivityIndicator style={{ marginTop: 12 }} />}
       {message ? <Text style={styles.message}>{message}</Text> : null}
+
+      <Text style={styles.linkText} onPress={handleForgotPassword}>
+        Forgot Password?
+      </Text>
 
       <Text style={styles.linkText} onPress={() => router.push("/signup")}>
         Don’t have an account? Sign up

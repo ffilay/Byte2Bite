@@ -5,6 +5,8 @@ export interface Items {
   price: number;
   category: string;
   description: string;
+  totalCost?: number;
+  profitMargin?: number;
   //restaurantID?
 }
 

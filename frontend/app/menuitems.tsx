@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Badge,
   Button,
-  ButtonGroup,
   Card,
   Col,
   Form,
@@ -12,6 +11,7 @@ import {
   Row,
   Spinner,
   Stack,
+  Pagination,
 } from "react-bootstrap";
 import { Items, menuService } from "@/services/menuService";
 import MenuItemModal from "./components/MenuItemModal";
@@ -20,6 +20,7 @@ import MenuTable from "./components/MenuTable";
 type CategoryFilter = "all" | string;
 
 const UNCATEGORIZED_LABEL = "Uncategorized";
+const PAGE_SIZE = 20;
 
 export default function MenuItemsPage() {
   const [items, setItems] = useState<Items[]>([]);
@@ -28,6 +29,7 @@ export default function MenuItemsPage() {
   const [selectedItem, setSelectedItem] = useState<Items | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const importSquareCatalog = async () => {
@@ -102,6 +104,15 @@ export default function MenuItemsPage() {
     });
   }, [items, normalizedTerm, categoryFilter]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [filteredItems.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
+
   const averagePrice = useMemo(() => {
     if (!items.length) {
       return null;
@@ -117,6 +128,20 @@ export default function MenuItemsPage() {
     }
 
     return Math.max(...items.map((item) => item.price ?? 0));
+  }, [items]);
+
+  const averageMargin = useMemo(() => {
+    if (!items.length) return null;
+    const margins = items
+      .map((item) => {
+        const totalCost = (item as any).totalCost ?? (item as any).total_cost ?? 0;
+        if (!item.price || item.price === 0) return null;
+        return (item.price - totalCost) / item.price;
+      })
+      .filter((m): m is number => m !== null && Number.isFinite(m));
+    if (!margins.length) return null;
+    const sum = margins.reduce((acc, m) => acc + m, 0);
+    return sum / margins.length;
   }, [items]);
 
   const currencyFormatter = useMemo(
@@ -146,8 +171,11 @@ export default function MenuItemsPage() {
       variant: "success" as const,
     },
     {
-      title: "Top Price",
-      value: topPrice !== null ? currencyFormatter.format(topPrice) : "--",
+      title: "Average Profit Margin",
+      value:
+        averageMargin !== null
+          ? `${(averageMargin * 100).toFixed(1)}%`
+          : "--",
       variant: "warning" as const,
     },
   ];
@@ -163,6 +191,12 @@ export default function MenuItemsPage() {
   };
 
   const clearSearch = () => setSearchTerm("");
+
+  const handlePageChange = (nextPage: number) => {
+    if (nextPage >= 1 && nextPage <= totalPages) {
+      setPage(nextPage);
+    }
+  };
 
   return (
     <div className="container mt-4">
@@ -228,26 +262,21 @@ export default function MenuItemsPage() {
               </Col>
             </Row>
 
-            <div className="d-flex flex-wrap gap-2 mt-3" role="group" aria-label="Category filters">
-              <ButtonGroup>
+            <div className="d-flex flex-wrap gap-2 mt-3 align-items-center">
+              <Form.Label className="mb-0 fw-semibold">Category</Form.Label>
+              <Form.Select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                disabled={isLoading}
+                aria-label="Filter by category"
+                style={{ maxWidth: 320 }}
+              >
                 {categoryOptions.map((option) => (
-                  <Button
-                    key={option.key}
-                    variant={categoryFilter === option.key ? "primary" : "outline-secondary"}
-                    onClick={() => setCategoryFilter(option.key)}
-                    disabled={isLoading}
-                  >
-                    {option.label}
-                    <Badge
-                      bg="transparent"
-                      text={categoryFilter === option.key ? "light" : "secondary"}
-                      className="ms-2 border rounded-pill"
-                    >
-                      {isLoading ? "..." : option.count}
-                    </Badge>
-                  </Button>
+                  <option key={option.key} value={option.key}>
+                    {option.label} ({option.count})
+                  </option>
                 ))}
-              </ButtonGroup>
+              </Form.Select>
             </div>
           </Card.Body>
         </Card>
@@ -266,7 +295,37 @@ export default function MenuItemsPage() {
                 </p>
               </div>
             ) : (
-              <MenuTable menuItem={filteredItems} onEdit={handleEditItem} />
+              <>
+                <MenuTable menuItem={paginatedItems} onEdit={handleEditItem} />
+                <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mt-3">
+                  <div className="text-muted">
+                    Showing {startIndex + 1}-
+                    {Math.min(startIndex + PAGE_SIZE, filteredItems.length)} of{" "}
+                    {filteredItems.length}
+                  </div>
+                  <Pagination className="mb-0">
+                    <Pagination.First
+                      onClick={() => handlePageChange(1)}
+                      disabled={currentPage === 1}
+                    />
+                    <Pagination.Prev
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    />
+                    <Pagination.Item active>
+                      {currentPage} / {totalPages}
+                    </Pagination.Item>
+                    <Pagination.Next
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    />
+                    <Pagination.Last
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={currentPage === totalPages}
+                    />
+                  </Pagination>
+                </div>
+              </>
             )}
           </Card.Body>
         </Card>

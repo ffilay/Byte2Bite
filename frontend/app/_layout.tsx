@@ -177,7 +177,7 @@ export default function RootLayout() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, minHeight: "100vh" }}>
       {/* Top Bar */}
       <View
         style={{
@@ -206,7 +206,7 @@ export default function RootLayout() {
       </View>
 
       {/* Sidebar + Main Content */}
-      <View style={{ flex: 1, flexDirection: "row" }}>
+      <View style={{ flex: 1, flexDirection: "row", minHeight: 0 }}>
         {showSidebar && (
           <View style={{ width: 200, backgroundColor: "#f4f4f4", padding: 20 }}>
             {links.map((link) => {
@@ -235,7 +235,7 @@ export default function RootLayout() {
             })}
           </View>
         )}
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           <Slot />
         </View>
       </View>

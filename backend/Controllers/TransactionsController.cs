@@ -10,6 +10,7 @@ namespace backend.Controllers
     public class TransactionsController : ControllerBase
     {
         private readonly ISupabaseService _supabaseService;
+        private const int RestaurantId = 1; // TODO: make configurable
 
         public TransactionsController(ISupabaseService supabaseService)
         {
@@ -62,6 +63,13 @@ namespace backend.Controllers
             }
 
             return Ok(result);
+        }
+
+        [HttpGet("last-sync")]
+        public async Task<IActionResult> GetLastSync(CancellationToken cancellationToken = default)
+        {
+            var last = await _supabaseService.GetLastSquareOrderSyncAsync(RestaurantId);
+            return Ok(new { last_success_at = last });
         }
     }
 }

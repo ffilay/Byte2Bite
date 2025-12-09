@@ -146,15 +146,6 @@ export default function RootLayout() {
     return () => listener.subscription.unsubscribe();
   }, [pathname, router]);
 
-  // Loading screen
-  if (isAuthenticated === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
   const showSidebar =
     pathname !== "/login" &&
     pathname !== "/signup" &&

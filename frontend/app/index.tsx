@@ -240,6 +240,9 @@ export default function HomeScreen() {
       </View>
 
       {/* Row 1: Menu metrics */}
+      <Text style={{ fontSize: 20, fontWeight: "700", marginTop: 0 }}>
+  Menu
+</Text>
       <View style={styles.cardsRow}>
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Menu Items</Text>
@@ -259,10 +262,37 @@ export default function HomeScreen() {
               {Object.keys(categoryCounts).length}
             </Text>
           )}
+          
+        </View>
+        
+      </View>
+       {/* Row 4: Menu pricing metrics */}
+       <View style={styles.cardsRow}>
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Average Price</Text>
+          {dashboardLoading ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.cardValue}>
+              {formatCurrency(averagePrice)}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Top Price</Text>
+          {dashboardLoading ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.cardValue}>{formatCurrency(topPrice)}</Text>
+          )}
         </View>
       </View>
 
       {/* Row 2: Ingredient core metrics */}
+      <Text style={{ fontSize: 20, fontWeight: "700", marginTop: 20 }}>
+  Ingredients
+</Text>
       <View style={styles.cardsRow}>
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Total Ingredients</Text>
@@ -310,30 +340,10 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Row 4: Menu pricing metrics */}
-      <View style={styles.cardsRow}>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Average Price</Text>
-          {dashboardLoading ? (
-            <ActivityIndicator />
-          ) : (
-            <Text style={styles.cardValue}>
-              {formatCurrency(averagePrice)}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Top Price</Text>
-          {dashboardLoading ? (
-            <ActivityIndicator />
-          ) : (
-            <Text style={styles.cardValue}>{formatCurrency(topPrice)}</Text>
-          )}
-        </View>
-      </View>
-
       {/* Row 5: Transaction / sales metrics */}
+      <Text style={{ fontSize: 20, fontWeight: "700", marginTop: 20 }}>
+  Transactions
+</Text>
       <View style={styles.cardsRow}>
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Total Transactions</Text>
@@ -396,7 +406,7 @@ const styles = StyleSheet.create({
   cardsRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 12,
+    marginTop: 10,
   },
   card: {
     flex: 1,

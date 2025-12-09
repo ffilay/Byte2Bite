@@ -16,11 +16,12 @@ namespace backend.Services
         Task<Restaurant?> CreateRestaurantAsync(Restaurant restaurant);
         Task<Restaurant?> UpdateRestaurantAsync(int id, Restaurant restaurant);
         Task<bool> DeleteRestaurantAsync(int id);
+        Task<IEnumerable<UserProfile>> GetUsersAsync(int limit = 100);
         Task<UserProfile?> GetUserByIdAsync(int id);
         Task<UserProfile?> CreateUserAsync(UserProfile user);
         Task<UserProfile?> UpdateUserAsync(int id, UserProfile user);
         Task<bool> DeleteUserAsync(int id);
-        Task<IEnumerable<Item>> GetItemsAsync(int limit = 100);
+        Task<IEnumerable<Item>> GetItemsAsync(int limit = 500);
         Task<IEnumerable<Ingredients2Items>> GetIngredientsForItemAsync(int itemId);
         Task<Ingredients2Items?> GetIngredientForItemAsync(int itemId, int ingredientId);
         Task<Ingredients2Items?> AddIngredientToItemAsync(Ingredients2Items link);

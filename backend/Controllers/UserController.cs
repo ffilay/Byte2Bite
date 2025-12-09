@@ -19,6 +19,14 @@ namespace backend.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var users = await _supabase.GetUsersAsync();
+            var dtos = _mapper.Map<IEnumerable<UserDto>>(users);
+            return Ok(dtos);
+        }
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> Get(int id)
         {

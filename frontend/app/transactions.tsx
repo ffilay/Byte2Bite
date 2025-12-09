@@ -6,8 +6,9 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Pressable,
 } from "react-native";
-import { fetchTransactions, Transaction, TransactionLineItem } from "../services/transactionService";
+import { fetchTransactions, fetchTransactionSyncState, Transaction, TransactionLineItem } from "../services/transactionService";
 
 const currencyFormat = (cents: number | null | undefined, currency: string) => {
   const n = Number(cents);
@@ -17,17 +18,24 @@ const currencyFormat = (cents: number | null | undefined, currency: string) => {
 };
 
 export default function TransactionsScreen() {
+  const PAGE_SIZE = 20;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [lastSync, setLastSync] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchTransactions(100);
-      setTransactions(data);
+      const [tx, sync] = await Promise.all([
+        fetchTransactions(100),
+        fetchTransactionSyncState().catch(() => ({ last_success_at: null })),
+      ]);
+      setTransactions(tx);
+      setLastSync(sync.last_success_at);
     } catch (err: any) {
       setError(err?.message ?? "Failed to load transactions");
     } finally {
@@ -39,12 +47,20 @@ export default function TransactionsScreen() {
     load();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [transactions.length]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     setError(null);
     try {
-      const data = await fetchTransactions(100);
-      setTransactions(data);
+      const [tx, sync] = await Promise.all([
+        fetchTransactions(100),
+        fetchTransactionSyncState().catch(() => ({ last_success_at: null })),
+      ]);
+      setTransactions(tx);
+      setLastSync(sync.last_success_at);
     } catch (err: any) {
       setError(err?.message ?? "Failed to load transactions");
     } finally {
@@ -64,6 +80,17 @@ export default function TransactionsScreen() {
       </Text>
     </View>
   );
+
+  const totalPages = Math.max(1, Math.ceil(transactions.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const pageData = transactions.slice(startIndex, startIndex + PAGE_SIZE);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage >= 1 && nextPage <= totalPages) {
+      setPage(nextPage);
+    }
+  };
 
   const renderTransaction = ({ item }: { item: Transaction }) => (
     <View style={styles.card}>
@@ -112,23 +139,72 @@ export default function TransactionsScreen() {
   return (
     <FlatList
       style={styles.container}
-      contentContainerStyle={{ padding: 16 }}
-      data={transactions}
+      contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+      data={pageData}
       keyExtractor={(item) => String(item.order_pk)}
       renderItem={renderTransaction}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      ListHeaderComponent={
+        <View style={styles.syncHeader}>
+          <Text style={styles.syncLabel}>Last Square sync</Text>
+          <Text style={styles.syncValue}>
+            {lastSync ? new Date(lastSync).toLocaleString() : "Not available"}
+          </Text>
+        </View>
+      }
       ListEmptyComponent={
         <View style={styles.center}>
           <Text style={styles.meta}>No transactions found.</Text>
         </View>
       }
+      ListFooterComponent={
+        transactions.length > 0 ? (
+          <View style={styles.pagination}>
+            <Text style={styles.meta}>
+              Showing {startIndex + 1}-{Math.min(startIndex + PAGE_SIZE, transactions.length)} of {transactions.length}
+            </Text>
+            <View style={styles.paginationButtons}>
+              <PageButton label="<<" disabled={currentPage === 1} onPress={() => changePage(1)} />
+              <PageButton label="<" disabled={currentPage === 1} onPress={() => changePage(currentPage - 1)} />
+              <Text style={styles.meta}>
+                {currentPage} / {totalPages}
+              </Text>
+              <PageButton label=">" disabled={currentPage === totalPages} onPress={() => changePage(currentPage + 1)} />
+              <PageButton label=">>" disabled={currentPage === totalPages} onPress={() => changePage(totalPages)} />
+            </View>
+          </View>
+        ) : null
+      }
     />
   );
 }
 
+const PageButton = ({
+  label,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  disabled?: boolean;
+  onPress: () => void;
+}) => (
+  <Pressable
+    onPress={disabled ? undefined : onPress}
+    style={[
+      styles.pageButton,
+      disabled ? styles.pageButtonDisabled : styles.pageButtonEnabled,
+    ]}
+    accessibilityRole="button"
+    accessibilityState={{ disabled }}
+  >
+    <Text style={[styles.pageButtonText, disabled && styles.pageButtonTextDisabled]}>{label}</Text>
+  </Pressable>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: 0,
     backgroundColor: "#f8f8f8",
   },
   center: {
@@ -195,5 +271,63 @@ const styles = StyleSheet.create({
   errorText: {
     color: "red",
     fontSize: 14,
+  },
+  pagination: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  pageButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  pageButtonEnabled: {
+    borderColor: "#0d6efd",
+    backgroundColor: "white",
+  },
+  pageButtonDisabled: {
+    borderColor: "#ccc",
+    backgroundColor: "#f8f9fa",
+  },
+  pageButtonText: {
+    color: "#0d6efd",
+    fontWeight: "600",
+  },
+  pageButtonTextDisabled: {
+    color: "#888",
+  },
+  syncHeader: {
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#eef4ff",
+    borderWidth: 1,
+    borderColor: "#d5e3ff",
+  },
+  syncLabel: {
+    fontSize: 12,
+    color: "#445",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  syncValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2a44",
   },
 });

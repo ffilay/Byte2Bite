@@ -75,13 +75,54 @@ namespace backend.Services
             return true;
         }
 
-        public async Task<IEnumerable<Item>> GetItemsAsync(int limit = 100)
+        public async Task<IEnumerable<Item>> GetItemsAsync(int limit = 500)
         {
-            var response = await _client.From<Item>()
+            var itemsResponse = await _client.From<Item>()
                                         .Select("*")
                                         .Limit(limit)
                                         .Get();
-            return response.Models;
+
+            var items = itemsResponse.Models;
+            if (!items.Any())
+                return items;
+
+            var itemIds = items.Select(i => i.Id).ToList();
+
+            var linksResponse = await _client.From<Ingredients2Items>()
+                                             .Select("*")
+                                             .Get();
+            var links = linksResponse.Models.Where(l => itemIds.Contains(l.Item_Id)).ToList();
+
+            var ingredientIds = links.Select(l => l.Ingredient_Id).Distinct().ToList();
+            var ingredientCosts = new Dictionary<int, decimal>();
+
+            if (ingredientIds.Any())
+            {
+                var ingredientsResponse = await _client.From<Ingredient>()
+                                                       .Select("*")
+                                                       .Filter(nameof(Ingredient.Id).ToLower(), Supabase.Postgrest.Constants.Operator.In, ingredientIds)
+                                                       .Get();
+                ingredientCosts = ingredientsResponse.Models.ToDictionary(i => i.Id, i => i.Cost_Per_Unit);
+            }
+
+            foreach (var item in items)
+            {
+                var total = links
+                    .Where(l => l.Item_Id == item.Id)
+                    .Sum(l =>
+                    {
+                        var qty = (decimal)l.Ingredient_Quantity;
+                        var cost = ingredientCosts.TryGetValue(l.Ingredient_Id, out var c) ? c : 0m;
+                        return qty * cost;
+                    });
+
+                item.Total_Cost = total;
+
+                var price = (decimal)item.Price;
+                item.Profit_Margin = price > 0 ? (price - total) / price : null;
+            }
+
+            return items;
         }
 
         public async Task<IEnumerable<Restaurant>> GetRestaurantsAsync(int limit = 100)
@@ -130,6 +171,14 @@ namespace backend.Services
             return true;
         }
 
+        public async Task<IEnumerable<UserProfile>> GetUsersAsync(int limit = 100)
+        {
+            var response = await _client.From<UserProfile>()
+                                        .Select("*")
+                                        .Limit(limit)
+                                        .Get();
+            return response.Models;
+        }
         public async Task<UserProfile?> GetUserByIdAsync(int id)
         {
             var response = await _client.From<UserProfile>()
@@ -193,6 +242,7 @@ namespace backend.Services
             var created = response.Models.FirstOrDefault();
             if (created == null) return null;
 
+            await RecalculateItemCostsAsync(link.Item_Id);
             return await GetIngredientForItemAsync(link.Item_Id, link.Ingredient_Id);
         }
 
@@ -210,6 +260,7 @@ namespace backend.Services
                         .Where(i => i.Ingredient_Id == ingredientId)
                         .Update(payload);
 
+            await RecalculateItemCostsAsync(itemId);
             return await GetIngredientForItemAsync(itemId, ingredientId);
         }
 
@@ -226,6 +277,8 @@ namespace backend.Services
                          .Where(i => i.Item_Id == itemId)
                          .Where(i => i.Ingredient_Id == ingredientId)
                          .Delete();
+
+            await RecalculateItemCostsAsync(itemId);
             return true;
         }
 
@@ -236,6 +289,58 @@ namespace backend.Services
                 .Limit(1)
                 .Get();
             return response.Models.FirstOrDefault();
+        }
+        
+        private async Task RecalculateItemCostsAsync(int itemId)
+        {
+            var itemResponse = await _client.From<Item>()
+                .Where(i => i.Id == itemId)
+                .Limit(1)
+                .Get();
+
+            var item = itemResponse.Models.FirstOrDefault();
+            if (item == null) return;
+            var price = (decimal)item.Price;
+
+            var linksResponse = await _client.From<Ingredients2Items>()
+                .Where(l => l.Item_Id == itemId)
+                .Get();
+            var links = linksResponse.Models;
+
+            if (!links.Any())
+            {
+                item.Total_Cost = 0m;
+                item.Profit_Margin = price > 0 ? (price - 0m) / price : null;
+                await _client.From<Item>()
+                    .Where(i => i.Id == itemId)
+                    .Update(item);
+                return;
+            }
+
+            var ingredientIds = links.Select(l => l.Ingredient_Id).Distinct().ToList();
+            var ingredientCosts = new Dictionary<int, decimal>();
+            if (ingredientIds.Any())
+            {
+                var ingredientsResponse = await _client.From<Ingredient>()
+                    .Select("*")
+                    .Filter(nameof(Ingredient.Id).ToLower(), Supabase.Postgrest.Constants.Operator.In, ingredientIds)
+                    .Get();
+                ingredientCosts = ingredientsResponse.Models.ToDictionary(i => i.Id, i => i.Cost_Per_Unit);
+            }
+
+            var total = links.Sum(link =>
+            {
+                var qty = (decimal)link.Ingredient_Quantity;
+                var cost = ingredientCosts.TryGetValue(link.Ingredient_Id, out var c) ? c : 0m;
+                return qty * cost;
+            });
+
+            item.Total_Cost = total;
+            item.Profit_Margin = price > 0 ? (price - total) / price : null;
+
+            await _client.From<Item>()
+                .Where(i => i.Id == itemId)
+                .Update(item);
         }
 
         public async Task<DateTimeOffset?> GetLastSquareOrderSyncAsync(int restaurantId)

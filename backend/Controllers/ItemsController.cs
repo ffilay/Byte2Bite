@@ -21,9 +21,9 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int limit = 1000)
         {
-            var items = await _supabase.GetItemsAsync();
+            var items = await _supabase.GetItemsAsync(limit);
             var dtos = _mapper.Map<IEnumerable<ItemDto>>(items);
             return Ok(dtos);
         }

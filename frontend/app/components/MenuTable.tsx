@@ -8,7 +8,7 @@ type Props = {
   onEdit: (item: Items) => void;
 };
 
-type SortKey = "name" | "price" | "category" | "description";
+type SortKey = "name" | "price" | "totalCost" | "profitMargin" | "category" | "description";
 
 type SortConfig = {
   key: SortKey;
@@ -39,9 +39,15 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
     const { key, direction } = sortConfig;
     const directionMultiplier = direction === "asc" ? 1 : -1;
 
+    const getValue = (item: Items) => {
+      if (key === "totalCost") return item.totalCost ?? 0;
+      if (key === "profitMargin") return item.profitMargin ?? Number.NEGATIVE_INFINITY;
+      return (item as any)[key];
+    };
+
     return [...menuItem].sort((a, b) => {
-      const valueA = a[key];
-      const valueB = b[key];
+      const valueA = getValue(a);
+      const valueB = getValue(b);
 
       if (typeof valueA === "number" && typeof valueB === "number") {
         return (valueA - valueB) * directionMultiplier;
@@ -79,11 +85,12 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
     <div className="table-responsive">
       <table className="table table-hover align-middle">
         <colgroup>
-          <col style={{ width: "22%" }} />
-          <col style={{ width: "12%" }} />
           <col style={{ width: "18%" }} />
-          <col style={{ width: "38%" }} />
-          <col style={{ width: "10%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "28%" }} />
+          <col style={{ width: "18%" }} />
         </colgroup>
         <thead className="bg-light text-secondary">
           <tr>
@@ -107,6 +114,28 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
               <span className="d-inline-flex align-items-center">
                 Price
                 {sortIndicator("price")}
+              </span>
+            </th>
+            <th
+              scope="col"
+              onClick={() => handleSort("totalCost")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              aria-sort={getAriaSort("totalCost")}
+            >
+              <span className="d-inline-flex align-items-center">
+                Total Cost
+                {sortIndicator("totalCost")}
+              </span>
+            </th>
+            <th
+              scope="col"
+              onClick={() => handleSort("profitMargin")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              aria-sort={getAriaSort("profitMargin")}
+            >
+              <span className="d-inline-flex align-items-center">
+                Profit Margin
+                {sortIndicator("profitMargin")}
               </span>
             </th>
             <th
@@ -141,6 +170,12 @@ export default function MenuTable({ menuItem, onEdit }: Props) {
             <tr key={item.id}>
               <td>{item.name}</td>
               <td>{item.price}</td>
+              <td>{item.totalCost ?? "—"}</td>
+              <td>
+                {typeof item.profitMargin === "number"
+                  ? `${(item.profitMargin * 100).toFixed(1)}%`
+                  : "—"}
+              </td>
               <td>{item.category || "Uncategorized"}</td>
               <td className="text-muted">{item.description || "—"}</td>
               <td className="text-center">

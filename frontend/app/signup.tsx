@@ -6,10 +6,13 @@ import {
   Button,
   StyleSheet,
   ActivityIndicator,
+  Alert,
+  Platform
 } from "react-native";
 import { supabase } from "../services/supabaseClient";
 import { useRouter } from "expo-router";
 import { RestaurantsService } from "@/services/RestaurantService";
+import { UserProfilesService, UserProfile } from '../services/UserProfileService';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -19,15 +22,48 @@ export default function SignupScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      // In web, use the browser's alert
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      // In iOS/Android, use React Native's Alert
+      Alert.alert(title, message);
+    }
+  };
+
+  async function emailAlreadyHasProfile(email: string): Promise<boolean> {
+    const trimmed = email.trim().toLowerCase();
+  
+    // Fetch all users from your API
+    const users = await UserProfilesService.getAllUsers();
+  
+    // Look for a matching email (case-insensitive)
+    return users.some(
+      (u) => (u.email ?? "").trim().toLowerCase() === trimmed
+    );
+  }
+
   const handleSignup = async () => {
     if (!email || !password || !firstName || !lastName) {
-      window.alert("Missing Information, Please enter all fields.");
+      showAlert("Missing Information", "Please enter all fields.");
       return;
     }
 
     setLoading(true);
 
     try {
+      const exists = await emailAlreadyHasProfile(email);
+
+      if (exists) {
+        showAlert(
+          "Account already exists",
+          "There is already a profile associated with this email. Please log in instead."
+        );
+        router.replace("/login"); // or keep the buttons version if you want
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -38,8 +74,20 @@ export default function SignupScreen() {
 
       if (error) {
         console.error("Signup error:", error.message);
-        window.alert("Signup Failed ${error.message}");
+        showAlert("Signup Failed", error.message);
         return;
+      }
+
+      if (data.user) {
+        const newProfile: UserProfile = {
+          id: 0, 
+          supabaseId: data.user.id,                      
+          fullName: `${firstName} ${lastName}`.trim(),
+          createdOn: new Date().toISOString(),
+          email: data.user.email ?? email,
+          restaurant_Id: 1,
+        };
+        const savedProfile = await UserProfilesService.addUserProfile(newProfile);
       }
 
       // ✅ If a user was created, redirect to verifyemail immediately
@@ -52,12 +100,12 @@ export default function SignupScreen() {
       }
 
       if (data.session) {
-        window.alert("Success, Account created! Redirecting...");
+        showAlert("Success", "Account created! Redirecting...");
         router.replace("/"); // ✅ Navigate to home
       }
     } catch (err: any) {
       console.error("Unexpected signup error:", err);
-      window.alert("Error, Something went wrong, please try again.");
+      showAlert("Error", "Something went wrong, please try again.");
     } finally {
       setLoading(false);
     }
@@ -103,6 +151,7 @@ export default function SignupScreen() {
       ) : (
         <Button title="Sign Up" onPress={handleSignup} />
       )}
+
 
       <Text style={styles.linkText} onPress={() => router.replace("/login")}>
         Already have an account? Log in

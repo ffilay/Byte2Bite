@@ -1,7 +1,50 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Platform } from "react-native";
 import { Slot, Link, Href, usePathname, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabaseClient";
+
+function getRecoverySearchFromLocation(): string | null {
+  if (typeof window === "undefined") return null;
+
+  // Prefer query string if present
+  let raw = window.location.search;
+  if (raw && raw.length > 1) {
+    return raw; // already starts with '?'
+  }
+
+  // Fallback to hash fragment: #access_token=...&type=recovery
+  const hash = window.location.hash;
+  if (hash && hash.length > 1) {
+    const hashWithoutHash = hash.substring(1); // remove '#'
+    const params = new URLSearchParams(hashWithoutHash);
+    const type = params.get("type");
+    if (type === "recovery") {
+      return `?${hashWithoutHash}`;
+    }
+  }
+
+  return null;
+}
+
+function isRecoveryLink(): boolean {
+  if (typeof window === "undefined") return false;
+
+  // Look in search first
+  const search = window.location.search;
+  if (search && search.length > 1) {
+    const params = new URLSearchParams(search);
+    if (params.get("type") === "recovery") return true;
+  }
+
+  // Then look in hash
+  const hash = window.location.hash;
+  if (hash && hash.length > 1) {
+    const params = new URLSearchParams(hash.substring(1));
+    if (params.get("type") === "recovery") return true;
+  }
+
+  return false;
+}
 
 export default function RootLayout() {
   const pathname = usePathname();
@@ -10,6 +53,13 @@ export default function RootLayout() {
   const [emailPending, setEmailPending] = useState<string | null>(null);
 
   useEffect(() => {
+    if (Platform.OS === "web") {
+      if (isRecoveryLink() && pathname !== "/reset-password") {
+        const search = getRecoverySearchFromLocation() ?? "";
+        router.replace(`/reset-password${search}` as any);
+        return; // initAuth will run after route changes
+      }
+    }
     const initAuth = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
@@ -22,6 +72,10 @@ export default function RootLayout() {
       setIsAuthenticated(!!session);
 
       if (session) {
+        if (pathname === "/reset-password") {
+          setEmailPending(null);
+          return;
+        }
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user && !userData.user.email_confirmed_at) {
           setEmailPending(userData.user.email ?? null);
@@ -44,7 +98,8 @@ export default function RootLayout() {
         if (
           pathname !== "/login" &&
           pathname !== "/signup" &&
-          pathname !== "/verifyemail"
+          pathname !== "/verifyemail" &&
+          pathname !== "/reset-password"
         ) {
           router.replace("/login");
         }
@@ -58,6 +113,16 @@ export default function RootLayout() {
         setIsAuthenticated(!!session);
 
         if (_event === "SIGNED_IN") {
+          if (Platform.OS === "web" && isRecoveryLink()) {
+            const search = getRecoverySearchFromLocation() ?? "";
+            router.replace(`/reset-password${search}` as any);
+            setEmailPending(null);
+            return;
+          }
+          if (pathname === "/reset-password") {
+            setEmailPending(null);
+            return;
+          }
           const { data: userData } = await supabase.auth.getUser();
           const user = userData?.user;
           if (user && !user.email_confirmed_at) {
@@ -71,7 +136,10 @@ export default function RootLayout() {
             router.replace("/");
           }
         }
-        if (_event === "SIGNED_OUT") router.replace("/login");
+        if (_event === "SIGNED_OUT") {
+          setEmailPending(null);
+          router.replace("/login");
+        }
       }
     );
 
@@ -91,6 +159,7 @@ export default function RootLayout() {
     pathname !== "/login" &&
     pathname !== "/signup" &&
     pathname !== "/verifyemail" &&
+    pathname !== "/reset-password" &&
     isAuthenticated;
 
   const links = [
@@ -101,11 +170,23 @@ export default function RootLayout() {
   ];
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // Clear local state immediately so UI updates even if network call fails
+    setIsAuthenticated(false);
+    setEmailPending(null);
+    try {
+      // Always clear local session so guards stop treating the user as logged-in
+      await supabase.auth.signOut({ scope: "local" });
+      // Best-effort revoke on the server (ignore errors so UI still routes away)
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+      if (error) console.warn("Supabase logout (global) failed:", error.message);
+    } catch (err) {
+      console.error("Unexpected logout error:", err);
+    }
+    router.replace("/login");
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, minHeight: "100vh" }}>
       {/* Top Bar */}
       <View
         style={{
@@ -134,7 +215,7 @@ export default function RootLayout() {
       </View>
 
       {/* Sidebar + Main Content */}
-      <View style={{ flex: 1, flexDirection: "row" }}>
+      <View style={{ flex: 1, flexDirection: "row", minHeight: 0 }}>
         {showSidebar && (
           <View style={{ width: 200, backgroundColor: "#f4f4f4", padding: 20 }}>
             {links.map((link) => {
@@ -163,7 +244,7 @@ export default function RootLayout() {
             })}
           </View>
         )}
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           <Slot />
         </View>
       </View>

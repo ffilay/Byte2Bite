@@ -7,7 +7,8 @@ namespace backend.Models
     [Table("ingredients2items")]
     public class Ingredients2Items : BaseModel
     {
-        [Column("item_id")]
+        // Table PK is item_id; ingredient_id is a FK (supabase needs the PK annotated)
+        [PrimaryKey("item_id", true)]
         public int Item_Id { get; set; }
 
         [Column("ingredient_id")]
